@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intersection Observer Example</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+      }
+
+      h1 {
+        text-align: center;
+        padding: 30px 20px;
+      }
+
+      .spacer {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 24px;
+      }
+
+      .lazy-images {
+        width: 300px;
+        height: 200px;
+        margin: 80px auto;
+        background: #ddd;
+        border-radius: 16px;
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all 0.6s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+      }
+
+      .lazy-images.visible {
+        opacity: 1;
+        transform: translateY(0);
+        background: #4f46e5;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 
+    - Lazy Loading Images
+    - Infinite Scrroll
+    - Fade-In on Scroll
+    -->
+    <h1>Scroll Down to Reveal Boxes</h1>
+
+    <div class="spacer">Scroll নিচে নামুন</div>
+
+    <div class="lazy-images">Box 1</div>
+    <div class="lazy-images">Box 2</div>
+    <div class="lazy-images">Box 3</div>
+    <div class="lazy-images">Box 4</div>
+
+    <script>
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visible");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.5,
+          rootMargin: "10px",
+        },
+      );
+
+      const check = document.querySelectorAll(".lazy-images");
+      check.forEach((item) => observer.observe(item));
+    </script>
+  </body>
+</html>

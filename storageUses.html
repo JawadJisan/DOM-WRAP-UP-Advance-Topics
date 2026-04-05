@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Theme Toggle Project</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --text: #111111;
+        --card: #f3f4f6;
+        --button: #111111;
+        --buttonText: #ffffff;
+      }
+
+      body.dark {
+        --bg: #0f172a;
+        --text: #f8fafc;
+        --card: #1e293b;
+        --button: #f8fafc;
+        --buttonText: #111111;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s ease;
+      }
+
+      .container {
+        background: var(--card);
+        padding: 30px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        width: min(90%, 420px);
+      }
+
+      h1 {
+        margin-bottom: 12px;
+      }
+
+      p {
+        line-height: 1.6;
+        margin-bottom: 20px;
+      }
+
+      button {
+        border: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        background: var(--button);
+        color: var(--buttonText);
+        font-size: 16px;
+        transition: 0.3s ease;
+      }
+
+      button:hover {
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Theme Toggle Project</h1>
+      <p>
+        Click the button below to switch between light mode and dark mode. Your
+        selected theme will stay saved even after refresh.
+      </p>
+      <button id="themeToggle">Toggle Theme</button>
+    </div>
+
+    <script>
+      const themeToggle = document.getElementById("themeToggle");
+      const savedTheme = localStorage.getItem("theme");
+
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+
+      themeToggle.addEventListener("click", () => {
+        const isDark = document.body.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+      });
+    </script>
+  </body>
+</html>

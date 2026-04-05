@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Storage</title>
+  </head>
+  <body>
+    <script>
+      //   Save Data
+      localStorage.setItem("userName", "JohnDoe");
+      localStorage.setItem("dataTheme", "dark");
+
+      //   Retrive Data
+      const userName = localStorage.getItem("userName");
+      console.log("Data coming from LocalStorage:", userName);
+
+      //   Remove specific Item
+      //   localStorage.removeItem("dataTheme");
+
+      //   Clear ALL
+      // localStorage.clear();
+
+      console.log(
+        localStorage.length
+          ? console.log("Data Present")
+          : console.log("No Data Present"),
+      );
+
+      //   Storing Object(must stringify)
+      const user = { name: "Jawad", roll: 2122, university: "IST" };
+      localStorage.setItem("user", JSON.stringify(user));
+
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      console.log(storedUser);
+      console.log(localStorage.getItem("user"));
+
+      //   Session Storage
+      sessionStorage.setItem("sessionId", "abc99");
+      const sessionId = sessionStorage.getItem("sessionId")
+    //   sessionStorage.clear()
+    </script>
+  </body>
+</html>
