@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Advanced To-Do App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    header {
+      background: #4CAF50;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .add-task {
+      display: flex;
+      padding: 20px;
+      gap: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    #taskInput {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    #addBtn {
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .filters {
+      display: flex;
+      gap: 10px;
+      padding: 15px 20px;
+      background: #f9f9f9;
+      border-bottom: 1px solid #eee;
+    }
+    .filter-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .filter-btn.active {
+      background: #4CAF50;
+      color: white;
+    }
+    .task-list {
+      list-style: none;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .task-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      border-bottom: 1px solid #eee;
+      transition: background 0.2s;
+      cursor: grab;
+    }
+    .task-item.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+    .task-checkbox {
+      margin-right: 12px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .task-text {
+      flex: 1;
+      font-size: 16px;
+    }
+    .completed .task-text {
+      text-decoration: line-through;
+      color: #888;
+    }
+    .delete-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    .empty-message {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 20px;
+      background: #f9f9f9;
+      border-top: 1px solid #eee;
+      font-size: 14px;
+    }
+    .clear-completed {
+      background: none;
+      border: none;
+      color: #ff6b6b;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📋 Advanced To-Do</h1>
+  </header>
+  <div class="add-task">
+    <input type="text" id="taskInput" placeholder="Enter a new task...">
+    <button id="addBtn">Add</button>
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="pending">Pending</button>
+    <button class="filter-btn" data-filter="completed">Completed</button>
+  </div>
+  <ul id="taskList" class="task-list"></ul>
+  <div class="stats">
+    <span>Total: <span id="totalCount">0</span></span>
+    <span>Completed: <span id="completedCount">0</span></span>
+    <span>Pending: <span id="pendingCount">0</span></span>
+    <button class="clear-completed" id="clearCompleted">Clear Completed</button>
+  </div>
+</div>
+
+<script>
+  // --- DOM Elements ---
+  const taskInput = document.getElementById('taskInput');
+  const addBtn = document.getElementById('addBtn');
+  const taskList = document.getElementById('taskList');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const clearCompletedBtn = document.getElementById('clearCompleted');
+  const totalSpan = document.getElementById('totalCount');
+  const completedSpan = document.getElementById('completedCount');
+  const pendingSpan = document.getElementById('pendingCount');
+
+  // --- State ---
+  let tasks = [];          // Array of { id, text, completed }
+  let currentFilter = 'all';
+
+  // --- Custom Events ---
+  const tasksUpdatedEvent = new CustomEvent('tasksUpdated');
+
+  // --- Load/Save from localStorage ---
+  function loadTasks() {
+    const stored = localStorage.getItem('tasks');
+    if (stored) {
+      tasks = JSON.parse(stored);
+    } else {
+      tasks = [
+        { id: Date.now(), text: 'Learn localStorage', completed: false },
+        { id: Date.now() + 1, text: 'Practice Intersection Observer', completed: false },
+        { id: Date.now() + 2, text: 'Master debouncing', completed: true }
+      ];
+    }
+    document.dispatchEvent(tasksUpdatedEvent);
+  }
+
+  function saveTasks() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }
+
+  // --- Render tasks based on current filter ---
+  function renderTasks() {
+    let filteredTasks = tasks;
+    if (currentFilter === 'pending') {
+      filteredTasks = tasks.filter(t => !t.completed);
+    } else if (currentFilter === 'completed') {
+      filteredTasks = tasks.filter(t => t.completed);
+    }
+
+    if (filteredTasks.length === 0) {
+      taskList.innerHTML = '<li class="empty-message">No tasks to show</li>';
+    } else {
+      taskList.innerHTML = filteredTasks.map(task => `
+        <li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}" draggable="true">
+          <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+          <span class="task-text">${escapeHtml(task.text)}</span>
+          <button class="delete-btn">Delete</button>
+        </li>
+      `).join('');
+    }
+
+    updateStats();
+    attachDragEvents(); // Re-attach drag events after re-render
+  }
+
+  // Helper to prevent XSS
+  function escapeHtml(str) {
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  // Update stats
+  function updateStats() {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.completed).length;
+    totalSpan.textContent = total;
+    completedSpan.textContent = completed;
+    pendingSpan.textContent = total - completed;
+  }
+
+  // --- Event Listeners with Event Delegation ---
+  taskList.addEventListener('click', (e) => {
+    const li = e.target.closest('.task-item');
+    if (!li) return;
+    const id = parseInt(li.dataset.id);
+
+    if (e.target.classList.contains('delete-btn')) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveTasks();
+      document.dispatchEvent(tasksUpdatedEvent);
+    } else if (e.target.classList.contains('task-checkbox')) {
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        task.completed = e.target.checked;
+        saveTasks();
+        document.dispatchEvent(tasksUpdatedEvent);
+      }
+    }
+  });
+
+  // Add new task
+  function addTask() {
+    const text = taskInput.value.trim();
+    if (!text) return;
+    const newTask = {
+      id: Date.now(),
+      text: text,
+      completed: false
+    };
+    tasks.push(newTask);
+    saveTasks();
+    taskInput.value = '';
+    document.dispatchEvent(tasksUpdatedEvent);
+  }
+
+  addBtn.addEventListener('click', addTask);
+  taskInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addTask();
+  });
+
+  // Filter buttons
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderTasks();
+    });
+  });
+
+  // Clear completed
+  clearCompletedBtn.addEventListener('click', () => {
+    tasks = tasks.filter(t => !t.completed);
+    saveTasks();
+    document.dispatchEvent(tasksUpdatedEvent);
+  });
+
+  // --- Drag and Drop (Reorder tasks) ---
+  let dragSrcElement = null;
+
+  function attachDragEvents() {
+    const items = document.querySelectorAll('.task-item');
+    items.forEach(item => {
+      item.addEventListener('dragstart', handleDragStart);
+      item.addEventListener('dragover', handleDragOver);
+      item.addEventListener('drop', handleDrop);
+      item.addEventListener('dragend', handleDragEnd);
+    });
+  }
+
+  function handleDragStart(e) {
+    dragSrcElement = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    this.classList.add('dragging');
+  }
+
+  function handleDragOver(e) {
+    if (e.preventDefault) e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+  }
+
+  function handleDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (dragSrcElement !== this) {
+      const dragId = parseInt(dragSrcElement.dataset.id);
+      const dropId = parseInt(this.dataset.id);
+      const dragIndex = tasks.findIndex(t => t.id === dragId);
+      const dropIndex = tasks.findIndex(t => t.id === dropId);
+      if (dragIndex !== -1 && dropIndex !== -1) {
+        const [moved] = tasks.splice(dragIndex, 1);
+        tasks.splice(dropIndex, 0, moved);
+        saveTasks();
+        document.dispatchEvent(tasksUpdatedEvent);
+      }
+    }
+    return false;
+  }
+
+  function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    dragSrcElement = null;
+  }
+
+  // --- Listen to tasksUpdated event to re-render ---
+  document.addEventListener('tasksUpdated', () => {
+    renderTasks();
+  });
+
+  // Initial load
+  loadTasks();
+  document.dispatchEvent(tasksUpdatedEvent);
+</script>
+</body>
+</html>
